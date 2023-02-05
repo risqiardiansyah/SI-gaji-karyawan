@@ -4,14 +4,19 @@ namespace App\Exports;
 
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class PenilaianPersheetExport implements FromCollection, WithTitle, WithHeadings
+class PenilaianPersheetExport implements FromCollection, WithTitle, WithHeadings, ShouldAutoSize, WithStyles
 {
     private $i;
     private $year;
     private $month;
+    private $columnCount;
+    private $space;
 
     public function __construct(int $year, int $i, int $month)
     {
@@ -25,6 +30,44 @@ class PenilaianPersheetExport implements FromCollection, WithTitle, WithHeadings
         if (!$month) {
             $this->month = date('m');
         }
+        $this->columnCount = 0;
+        $this->space = (object) [
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        switch ($this->i) {
+            case '1':
+                $lcolumn = 'H' . $this->columnCount;
+                break;
+            case '2':
+                $lcolumn = 'F' . $this->columnCount;
+                break;
+            case '3':
+                $lcolumn = 'Q' . $this->columnCount;
+                break;
+
+            default:
+                break;
+        }
+        $sheet->getStyle('A1:' . $lcolumn)->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -32,6 +75,7 @@ class PenilaianPersheetExport implements FromCollection, WithTitle, WithHeadings
      */
     public function collection()
     {
+        $result = [];
         $select = [
             'id',
             'karyawan_code',
@@ -60,7 +104,51 @@ class PenilaianPersheetExport implements FromCollection, WithTitle, WithHeadings
 
                     $data[$x]->type = $data[$x]->type == 1 ? 'Karyawan' : 'Magang';
                     $data[$x]->id = $x + 1;
+
+                    array_push($result, $data[$x]);
                 }
+
+                array_push($result, $this->space);
+
+                $tgl = (object) [
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    'Depok, ' . \Carbon\Carbon::now('Asia/Jakarta')->locale('id')->isoFormat('DD MMMM Y'),
+                    '',
+                ];
+                array_push($result, $tgl);
+
+                $jabatan = (object) [
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    'HR & People Development',
+                    '',
+                ];
+                array_push($result, $jabatan);
+
+                for ($y = 0; $y < 3; $y++) {
+                    array_push($result, $this->space);
+                }
+
+                $nama = (object) [
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    'Novita Widyanti H, S.Psi., MM.',
+                    '',
+                ];
+                array_push($result, $nama);
                 break;
             case '2':
                 for ($x = 0; $x < count($data); $x++) {
@@ -81,7 +169,45 @@ class PenilaianPersheetExport implements FromCollection, WithTitle, WithHeadings
 
                     $data[$x]->type = $data[$x]->type == 1 ? 'Karyawan' : 'Magang';
                     $data[$x]->id = $x + 1;
+
+                    array_push($result, $data[$x]);
                 }
+
+                array_push($result, $this->space);
+
+                $tgl = (object) [
+                    '',
+                    '',
+                    '',
+                    '',
+                    'Depok, ' . \Carbon\Carbon::now('Asia/Jakarta')->locale('id')->isoFormat('DD MMMM Y'),
+                    '',
+                ];
+                array_push($result, $tgl);
+
+                $jabatan = (object) [
+                    '',
+                    '',
+                    '',
+                    '',
+                    'HR & People Development',
+                    '',
+                ];
+                array_push($result, $jabatan);
+
+                for ($y = 0; $y < 3; $y++) {
+                    array_push($result, $this->space);
+                }
+
+                $nama = (object) [
+                    '',
+                    '',
+                    '',
+                    '',
+                    'Novita Widyanti H, S.Psi., MM.',
+                    '',
+                ];
+                array_push($result, $nama);
                 break;
             case '3':
                 for ($x = 0; $x < count($data); $x++) {
@@ -102,14 +228,87 @@ class PenilaianPersheetExport implements FromCollection, WithTitle, WithHeadings
 
                     $data[$x]->type = $data[$x]->type == 1 ? 'Karyawan' : 'Magang';
                     $data[$x]->id = $x + 1;
+
+                    array_push($result, $data[$x]);
                 }
+
+                array_push($result, $this->space);
+
+                $tgl = (object) [
+                    '',
+                    'Depok, ' . \Carbon\Carbon::now('Asia/Jakarta')->locale('id')->isoFormat('DD MMMM Y'),
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                ];
+                array_push($result, $tgl);
+
+                $jabatan = (object) [
+                    '',
+                    'HR & People Development',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                ];
+                array_push($result, $jabatan);
+
+                for ($y = 0; $y < 3; $y++) {
+                    array_push($result, $this->space);
+                }
+
+                $nama = (object) [
+                    '',
+                    'Novita Widyanti H, S.Psi., MM.',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                ];
+                array_push($result, $nama);
                 break;
 
             default:
                 break;
         }
 
-        return $data;
+        $this->columnCount = count($result) - 6;
+
+        return collect($result);
     }
 
     public function title(): string

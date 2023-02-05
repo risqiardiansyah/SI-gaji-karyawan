@@ -4,21 +4,51 @@ namespace App\Exports;
 
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class SlipPersheetExport implements FromCollection, WithTitle, WithHeadings
+class SlipPersheetExport implements FromCollection, WithTitle, WithHeadings, ShouldAutoSize, WithStyles
 {
     private $i;
     private $year;
+    private $columnCount;
+    private $space;
 
     public function __construct(int $year, int $i)
     {
         $this->i = $i;
         $this->year  = $year;
+        $this->columnCount = 0;
         if (!$year) {
             $this->year = date('Y');
         }
+        $this->space = (object) [
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+
+        $sheet->getStyle('A1:J' . $this->columnCount)->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -26,6 +56,8 @@ class SlipPersheetExport implements FromCollection, WithTitle, WithHeadings
      */
     public function collection()
     {
+        $result = [];
+
         $select = [
             'id',
             'karyawan_code',
@@ -57,9 +89,61 @@ class SlipPersheetExport implements FromCollection, WithTitle, WithHeadings
 
             $data[$x]->type = $data[$x]->type == 1 ? 'Karyawan' : 'Magang';
             $data[$x]->id = $x + 1;
+
+            array_push($result, $data[$x]);
         }
 
-        return $data;
+        $this->columnCount = count($result) + 1;
+
+        array_push($result, $this->space);
+
+        $tgl = (object) [
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'Depok, ' . \Carbon\Carbon::now('Asia/Jakarta')->locale('id')->isoFormat('DD MMMM Y'),
+            ''
+        ];
+        array_push($result, $tgl);
+
+        $jabatan = (object) [
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'HR & People Development',
+            ''
+        ];
+        array_push($result, $jabatan);
+
+        for ($y=0; $y < 3; $y++) { 
+            array_push($result, $this->space);
+        }
+
+        $nama = (object) [
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'Novita Widyanti H, S.Psi., MM.',
+            ''
+        ];
+        array_push($result, $nama);
+        
+        return collect($result);
     }
 
     public function title(): string

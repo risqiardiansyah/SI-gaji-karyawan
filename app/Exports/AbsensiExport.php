@@ -4,15 +4,45 @@ namespace App\Exports;
 
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class AbsensiExport implements FromCollection, WithHeadings
+class AbsensiExport implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
     protected $request;
+    private $columnCount;
+    private $space;
 
     function __construct($request)
     {
         $this->request = $request;
+        $this->columnCount = 0;
+        $this->space = (object) [
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+
+        $sheet->getStyle('A1:AG' . $this->columnCount)->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -28,8 +58,8 @@ class AbsensiExport implements FromCollection, WithHeadings
             $tahun = date('Y');
         }
 
+        $result = [];
         for ($x = 0; $x < count($karyawan); $x++) {
-            $result = [];
             $hari = date("d", strtotime(date($tahun . '-' . $bulan . '-d')));
             if ($bulan != date('m')) {
                 $hari = date("t", strtotime(date($tahun . '-' . $bulan . '-d')));
@@ -48,9 +78,61 @@ class AbsensiExport implements FromCollection, WithHeadings
                     $karyawan[$x]->$tgl = 'alpha';
                 }
             }
+
+            array_push($result, $karyawan[$x]);
         }
-        // dd($karyawan);
-        return $karyawan;
+
+        $this->columnCount = count($result) + 1;
+
+        array_push($result, $this->space);
+
+        $tgl = (object) [
+            '',
+            'Depok, ' . \Carbon\Carbon::now('Asia/Jakarta')->locale('id')->isoFormat('DD MMMM Y'),
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        ];
+        array_push($result, $tgl);
+
+        $jabatan = (object) [
+            '',
+            'HR & People Development',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        ];
+        array_push($result, $jabatan);
+
+        for ($y = 0; $y < 3; $y++) {
+            array_push($result, $this->space);
+        }
+
+        $nama = (object) [
+            '',
+            'Novita Widyanti H, S.Psi., MM.',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        ];
+        array_push($result, $nama);
+
+        return collect($result);
     }
 
     public function headings(): array
